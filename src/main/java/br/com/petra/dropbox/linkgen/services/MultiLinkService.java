@@ -42,7 +42,7 @@ public class MultiLinkService {
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
 
-    public void criarLinkSharedAll(String path, String apiKey, Runnable closer) throws IOException {
+    public void criarLinkSharedAll(String path, String apiKey) throws IOException {
         URI pathDropbox = DropboxLinkGenUtils.normalizarPath(path);
         String userHome = System.getProperty("user.home");
         System.out.println("USER HOME: " + userHome);
@@ -130,7 +130,6 @@ public class MultiLinkService {
             FileUtils.writeStringToFile(jsonLinkReport, linksGeradosJSON, Charset.defaultCharset());
         }
 
-        closer.run();
     }
 
 }

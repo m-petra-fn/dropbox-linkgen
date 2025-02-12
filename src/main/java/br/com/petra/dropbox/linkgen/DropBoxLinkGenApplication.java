@@ -36,25 +36,29 @@ public class DropBoxLinkGenApplication implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        String apiKey = JOptionPane.showInputDialog(
-                null,
-                "Enter the API Key. You can find it at https://dropbox.github.io/dropbox-api-v2-explorer/#check_app",
-                "API Key",
-                JOptionPane.QUESTION_MESSAGE
-        );
+        try {
+            String apiKey = JOptionPane.showInputDialog(
+                    null,
+                    "Enter the API Key. You can find it at https://dropbox.github.io/dropbox-api-v2-explorer/#check_app",
+                    "API Key",
+                    JOptionPane.QUESTION_MESSAGE
+            );
 
-        String path = JOptionPane.showInputDialog(
-                null,
-                "Enter the path to the folder inside your Dropbox folder. Example: /Imagens/Rotator/Qaresi",
-                "Folder Path",
-                JOptionPane.QUESTION_MESSAGE
-        );
+            String path = JOptionPane.showInputDialog(
+                    null,
+                    "Enter the path to the folder inside your Dropbox folder. Example: /Imagens/Rotator/Qaresi",
+                    "Folder Path",
+                    JOptionPane.QUESTION_MESSAGE
+            );
 
-        if (StringUtils.isAnyBlank(apiKey, path)) {
-            JOptionPane.showMessageDialog(null, "Either the apiKey or path are blank, please try again.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+            if (StringUtils.isAnyBlank(apiKey, path)) {
+                JOptionPane.showMessageDialog(null, "Either the apiKey or path are blank, please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            multiLinkService.criarLinkSharedAll(StringUtils.appendIfMissing(path, "/"), apiKey);
+        } finally {
+            SpringApplication.exit(applicationContext);
         }
-
-        multiLinkService.criarLinkSharedAll(StringUtils.appendIfMissing(path, "/"), apiKey, () -> SpringApplication.exit(applicationContext));
     }
 }
