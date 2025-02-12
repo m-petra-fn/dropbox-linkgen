@@ -39,9 +39,9 @@ public abstract class DropboxLinkGenUtils {
         return UriComponentsBuilder.fromPath(StringUtils.lowerCase(path)).build().toUri();
     }
 
-    public static Flux<CreateShareLinkDTO> iterateFiles(File pasta, URI pathDropbox) {
+    public static Flux<CreateShareLinkDTO> iterateFiles(File[] arquivos, URI pathDropbox) {
         System.out.printf("PATH DROPBOX: %s", pathDropbox);
-        return Flux.fromArray(pasta.listFiles())
+        return Flux.fromArray(arquivos)
                 .map(file -> new CreateShareLinkDTO(normalizarPathString(pathDropbox + file.getName())))
                 .log();
     }
