@@ -18,6 +18,9 @@ public class ResponseCreatedShareLinkDTO {
     private String tag;
     private Long size;
 
+    public ResponseCreatedShareLinkDTO() {
+    }
+
     public ResponseCreatedShareLinkDTO(AlreadyExistsErrorDTO alreadyExistsErrorDTO) {
         Metadata metadata = alreadyExistsErrorDTO.getError().getShared_link_already_exists().getMetadata();
 

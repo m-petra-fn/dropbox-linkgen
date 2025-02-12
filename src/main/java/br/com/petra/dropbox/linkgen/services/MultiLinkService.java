@@ -1,14 +1,15 @@
 package br.com.petra.dropbox.linkgen.services;
 
 import br.com.petra.dropbox.linkgen.config.ApplicationConstants;
-import br.com.petra.dropbox.linkgen.dtos.CreateShareLinkDTO;
 import br.com.petra.dropbox.linkgen.dtos.ResponseCreatedShareLinkDTO;
 import br.com.petra.dropbox.linkgen.dtos.alreadyexistserror.AlreadyExistsErrorDTO;
 import br.com.petra.dropbox.linkgen.enums.EnumEndpoint;
 import br.com.petra.dropbox.linkgen.utils.DropboxLinkGenUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -28,12 +29,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.time.Duration;
+import java.util.List;
 
 @Service
-public class WebClientService {
+public class MultiLinkService {
 
-    @Autowired
-    private MultiLinkService multiLinkService;
+    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     private ExchangeFilterFunction logRequest() {
         return (clientRequest, next) -> {
@@ -58,21 +59,8 @@ public class WebClientService {
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
 
-    public Mono<ResponseCreatedShareLinkDTO> criarLinkShared(String path, String apiKey) {
-        return client.post()
-                .uri(EnumEndpoint.CRIAR_SHARE_LINK.toString())
-                .header(HttpHeaders.AUTHORIZATION, DropboxLinkGenUtils.prefixarApiKey(apiKey))
-                .body(Mono.just(new CreateShareLinkDTO(DropboxLinkGenUtils.normalizarPathString(path))).log(), CreateShareLinkDTO.class)
-                .retrieve()
-                .bodyToMono(ResponseCreatedShareLinkDTO.class);
-    }
-
     @Async
-    public void iniciadoProcessoLinks(String path, String apiKey) throws IOException {
-        multiLinkService.criarLinkSharedAll(path, apiKey);
-    }
-
-    public Flux<ResponseCreatedShareLinkDTO> criarLinkSharedAll(String path, String apiKey) throws IOException {
+    public void criarLinkSharedAll(String path, String apiKey) throws IOException {
         URI pathDropbox = DropboxLinkGenUtils.normalizarPath(path);
         String userHome = System.getProperty("user.home");
         System.out.println("USER HOME: " + userHome);
@@ -94,8 +82,8 @@ public class WebClientService {
 
         FileUtils.writeStringToFile(txtLinkList, StringUtils.EMPTY, Charset.defaultCharset());
 
-        return Flux.from(DropboxLinkGenUtils.iterateFiles(pasta, pathDropbox))
-                .delayElements(Duration.ofSeconds(3))
+        List<ResponseCreatedShareLinkDTO> linksGerados = Flux.from(DropboxLinkGenUtils.iterateFiles(pasta, pathDropbox))
+                .delayElements(Duration.ofSeconds(5))
                 .flatMapSequential(dto ->
                         client.post()
                                 .uri(EnumEndpoint.CRIAR_SHARE_LINK.toString())
@@ -124,8 +112,17 @@ public class WebClientService {
                                             .doOnNext(linkCriado -> DropboxLinkGenUtils.escreverLinksEmTxt(linkCriado, txtLinkList));
                                 })
                                 .log()
-                );
-    }
+                )
+                .collectList()
+                .block();
 
+
+
+        System.out.printf("Process complete, %s links generated", CollectionUtils.emptyIfNull(linksGerados).size());
+        String linksGeradosJSON = OBJECT_MAPPER.writeValueAsString(linksGerados);
+
+        File jsonLinkReport = new File(pasta.getParentFile().toURI().resolve(pasta.getName() + "-links-report.json"));
+        FileUtils.writeStringToFile(jsonLinkReport, linksGeradosJSON, Charset.defaultCharset());
+    }
 
 }
