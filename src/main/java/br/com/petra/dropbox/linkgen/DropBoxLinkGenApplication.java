@@ -5,14 +5,23 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import javax.swing.*;
 
 @SpringBootApplication
 public class DropBoxLinkGenApplication implements ApplicationRunner {
+
+    private final ApplicationContext applicationContext; // Field to hold the context
+
+    // Constructor injection (recommended):
+    public DropBoxLinkGenApplication(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
 
     @Autowired
     private MultiLinkService multiLinkService;
@@ -36,7 +45,7 @@ public class DropBoxLinkGenApplication implements ApplicationRunner {
 
         String path = JOptionPane.showInputDialog(
                 null,
-                "Enter the path to the folder inside your Dropbox folder. Example: \\Imagens\\Rotator\\Qaresi",
+                "Enter the path to the folder inside your Dropbox folder. Example: /Imagens/Rotator/Qaresi",
                 "Folder Path",
                 JOptionPane.QUESTION_MESSAGE
         );
@@ -46,6 +55,6 @@ public class DropBoxLinkGenApplication implements ApplicationRunner {
             return;
         }
 
-        multiLinkService.criarLinkSharedAll(StringUtils.appendIfMissing(path, "/"), apiKey);
+        multiLinkService.criarLinkSharedAll(StringUtils.appendIfMissing(path, "/"), apiKey, () -> SpringApplication.exit(applicationContext));
     }
 }

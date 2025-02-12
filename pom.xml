@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>br.com.petra</groupId>
 	<artifactId>dropbox.linkgen</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<name>DropBox LinkGen</name>
 	<description>Gerador de links para o DropBox</description>
 	<url/>
