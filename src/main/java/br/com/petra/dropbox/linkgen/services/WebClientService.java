@@ -24,6 +24,8 @@ import reactor.core.publisher.Mono;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.util.Collections;
 
 @Service
 public class WebClientService {
@@ -83,10 +85,11 @@ public class WebClientService {
 
         File txtLinkList = new File(pasta.getParentFile().toURI().resolve(pasta.getName() + "-links.txt"));
         System.out.printf("PASTA TEXTLINK: %s%n", txtLinkList.getAbsolutePath());
-        FileUtils.writeStringToFile(txtLinkList, StringUtils.EMPTY);
+
+        FileUtils.writeStringToFile(txtLinkList, StringUtils.EMPTY, Charset.defaultCharset());
 
         return Flux.from(iterateFiles(pasta, pathDropbox))
-                .flatMap(dto ->
+                .flatMapSequential(dto ->
                         client.post()
                                 .uri(EnumEndpoint.CRIAR_SHARE_LINK.toString())
                                 .header(HttpHeaders.AUTHORIZATION, prefixarApiKey(apiKey))
@@ -121,7 +124,7 @@ public class WebClientService {
         String linkCriadoDownloadable = DropboxLinkGenUtils.getDownloadableLink(linkCriado.getUrl());
         System.out.printf("Link criado para arquivo (%s): %s%n", linkCriado.getName(), linkCriadoDownloadable);
         try {
-            FileUtils.writeStringToFile(txtLinkList, linkCriadoDownloadable + "\n");
+            FileUtils.writeLines(txtLinkList, Charset.defaultCharset().name(), Collections.singleton(linkCriadoDownloadable), true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
